@@ -1,0 +1,34 @@
+services:
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    container_name: mariadb-recoleccion-eventos
+    networks:
+      - eventos_net
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      TZ: ${TZ:-America/Lima}
+    ports:
+      - "${DB_PORT}:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=America/Lima
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./database/migrations:/docker-entrypoint-initdb.d:Z
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  eventos_net:
+    driver: bridge
+
+volumes:
+  mariadb_data:
